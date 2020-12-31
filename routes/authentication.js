@@ -37,11 +37,33 @@ router.post('/login', async (req, res) => {
     }
 });
 
+router.post('/logout', auth, async (req, res) => {
+    try {
+        req.user.logins = req.user.logins.filter(login => login.token !== req.token);
+        await req.user.save();
+        res.status(200).json({message: `Logout successful!!!`});
+    } catch (e) {
+        res.status(500).json({message: e.message});
+    }
+});
+
+
+router.post('/logoutAll', auth, async (req, res) => {
+    try {
+        req.user.logins = [];
+        await req.user.save();
+        res.status(200).json({message: `Logged out of all devices`});
+    } catch (e) {
+        res.status(500).json({message: e.message});
+    }
+});
+
 router.get('/me', auth, async (req, res) => {
     try {
         res.status(200).json({data: req.user, token: req.token, message: `Profile retrieved`});
     } catch (e) {
         res.status(500).json({message: e.message});
     }
-})
+});
+
 export default router;

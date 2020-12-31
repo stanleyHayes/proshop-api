@@ -7,6 +7,7 @@ import mongoose from "mongoose";
 import productsRouter from "./routes/products.js";
 import reviewsRouter from "./routes/reviews.js";
 import authRouter from "./routes/authentication.js";
+import usersRouter from "./routes/users.js";
 import colors from "colors";
 
 const app = express();
@@ -36,5 +37,6 @@ app.use(express.json());
 app.use('/api/v1/products', productsRouter);
 app.use('/api/v1/reviews', reviewsRouter);
 app.use('/api/v1/auth', authRouter);
+app.use('/api/v1/users', usersRouter);
 
 app.listen(PORT, () => console.log(`Server running in ${process.env.NODE_ENV} mode on port ${PORT}`.yellow.bold));
