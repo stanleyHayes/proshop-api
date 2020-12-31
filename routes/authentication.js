@@ -31,7 +31,7 @@ router.post('/login', async (req, res) => {
             return res.status(401).json({data: {}, message: `Password does not match account with email ${email}`});
         }
         const token = await user.generateToken();
-        res.status(200).json({data: {user}, message: `User logged in Successfully`, token})
+        res.status(200).json({data: user, message: `User logged in Successfully`, token})
     } catch (e) {
 
     }
@@ -47,7 +47,6 @@ router.post('/logout', auth, async (req, res) => {
     }
 });
 
-
 router.post('/logoutAll', auth, async (req, res) => {
     try {
         req.user.logins = [];
@@ -61,6 +60,34 @@ router.post('/logoutAll', auth, async (req, res) => {
 router.get('/me', auth, async (req, res) => {
     try {
         res.status(200).json({data: req.user, token: req.token, message: `Profile retrieved`});
+    } catch (e) {
+        res.status(500).json({message: e.message});
+    }
+});
+
+router.put('/me', auth, async (req, res) => {
+    try {
+        const allowedUpdates = ['email', 'phone', 'name', 'password'];
+        const updates = Object.keys(req.body);
+        if (updates.includes('email')) {
+            let user = await User.findOne({email: req.body.email});
+            if (user) {
+                return res.status(409).json({message: `Account with email ${req.body.email} already exists!!!`});
+            }
+        }
+        const isAllowed = updates.every(update => allowedUpdates.includes(update));
+        if (!isAllowed) {
+            return res.status(400).json({message: `Update not allowed`});
+        }
+        for (let key of updates) {
+            req.user[key] = req.body[key];
+        }
+        await req.user.save();
+        res.status(200).json({
+            data: req.user,
+            token: req.token,
+            message: `Account with email ${req.body.email} successfully updated`
+        });
     } catch (e) {
         res.status(500).json({message: e.message});
     }

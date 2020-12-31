@@ -5,8 +5,8 @@ const router = express.Router();
 
 router.post('/', async (req, res) => {
     try {
-        let {name, description, category, price, brand, image} = req.body;
-        let product = new Product({name, description, category, price, brand, image});
+        let {name, description, category, price, brand, image, countInStock} = req.body;
+        let product = new Product({name, description, category, price, brand, image, countInStock});
         product = await Product.create(product);
 
         await product
