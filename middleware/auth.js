@@ -3,7 +3,7 @@ import User from "../models/user.js";
 
 const auth = async (req, res, next) => {
     try {
-        if (req.get('Authorization') && !req.get('Authorization').startsWith('Bearer')) {
+        if (!req.get('Authorization') || !req.get('Authorization').startsWith('Bearer')) {
             return res.status(400).json({data: {}, message: `Invalid header format`});
         }
         let token = req.get('Authorization').split(' ')[1];

@@ -69,12 +69,6 @@ router.put('/me', auth, async (req, res) => {
     try {
         const allowedUpdates = ['email', 'phone', 'name', 'password'];
         const updates = Object.keys(req.body);
-        if (updates.includes('email')) {
-            let user = await User.findOne({email: req.body.email});
-            if (user) {
-                return res.status(409).json({message: `Account with email ${req.body.email} already exists!!!`});
-            }
-        }
         const isAllowed = updates.every(update => allowedUpdates.includes(update));
         if (!isAllowed) {
             return res.status(400).json({message: `Update not allowed`});

@@ -4,10 +4,11 @@ import helmet from "helmet";
 import morgan from "morgan";
 import dotenv from "dotenv";
 import mongoose from "mongoose";
-import productsRouter from "./routes/products.js";
-import reviewsRouter from "./routes/reviews.js";
-import authRouter from "./routes/authentication.js";
-import usersRouter from "./routes/users.js";
+import productRoutes from "./routes/products.js";
+import reviewRoutes from "./routes/reviews.js";
+import authRoutes from "./routes/authentication.js";
+import userRoutes from "./routes/users.js";
+import orderRoutes from "./routes/orders.js";
 import colors from "colors";
 
 const app = express();
@@ -34,9 +35,11 @@ app.use(helmet());
 app.use(morgan("dev"));
 app.use(express.json());
 
-app.use('/api/v1/products', productsRouter);
-app.use('/api/v1/reviews', reviewsRouter);
-app.use('/api/v1/auth', authRouter);
-app.use('/api/v1/users', usersRouter);
+app.use('/api/v1/products', productRoutes);
+app.use('/api/v1/reviews', reviewRoutes);
+app.use('/api/v1/auth', authRoutes);
+app.use('/api/v1/users', userRoutes);
+app.use('/api/v1/orders', orderRoutes);
+
 
 app.listen(PORT, () => console.log(`Server running in ${process.env.NODE_ENV} mode on port ${PORT}`.yellow.bold));
