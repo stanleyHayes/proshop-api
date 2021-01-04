@@ -1,19 +1,20 @@
 import express from "express";
 import Product from "../models/product.js";
-
+import auth from "../middleware/auth.js";
 const router = express.Router();
 
-router.post('/', async (req, res) => {
+router.post('/', auth, async (req, res) => {
     try {
         let {name, description, category, price, brand, image, countInStock} = req.body;
-        let product = new Product({name, description, category, price, brand, image, countInStock});
+        let product = new Product({name, description, category, price, brand, image, countInStock,  user: req.user._id});
         product = await Product.create(product);
 
         await product
             .populate({
                 path: "reviews",
                 populate: {
-                    path: "user"
+                    path: "user",
+                    select: 'name email _id'
                 }
             }).populate({
                 path: "numReviews"
@@ -66,7 +67,7 @@ router.get('/:id', async (req, res) => {
 });
 
 
-router.put('/:id', async (req, res) => {
+router.put('/:id', auth, async (req, res) => {
     try {
         let product = await Product.findById(req.params.id)
             .populate({
@@ -78,10 +79,9 @@ router.put('/:id', async (req, res) => {
                 path: "numReviews"
             });
         if (!product) {
-            return res.status(404).json({data: {}, message: `${product.name} not found`});
+            return res.status(404).json({data: {}, message: `Product with id ${req.params.id} not found`});
         }
-
-        const allowedUpdates = ['name', 'category', 'brand', 'price', 'description', 'countInStock', 'image'];
+        const allowedUpdates = ['name', 'category', 'brand', 'price', 'description', 'countInStock', 'image', 'user'];
         const updates = Object.keys(req.body);
         const isAllowed = updates.every(update => allowedUpdates.includes(update));
         if (!isAllowed) {
@@ -98,7 +98,7 @@ router.put('/:id', async (req, res) => {
 });
 
 
-router.delete('/:id', async (req, res) => {
+router.delete('/:id', auth, async (req, res) => {
     try {
         let product = await Product.findById(req.params.id);
         if (!product) {

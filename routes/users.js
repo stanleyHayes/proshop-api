@@ -46,7 +46,8 @@ router.put('/:id', auth, async (req, res) => {
             return res.status(404).json({data: {}, message: `User with id ${req.params.id} does not exist`});
         }
         const updates = Object.keys(req.body);
-        const allowedUpdates = ['email', 'phone', 'name', 'password'];
+        console.log(req.body);
+        const allowedUpdates = ['email', 'phone', 'name', 'password', 'isAdmin'];
         const isAllowed = updates.every(update => allowedUpdates.includes(update));
         if (!isAllowed) {
             return res.status(400).json({message: `Update not allowed`});
@@ -54,7 +55,7 @@ router.put('/:id', auth, async (req, res) => {
         for (let key of updates) {
             user[key] = req.body[key];
         }
-        await req.user.save();
+        await user.save();
 
         res.status(200).json({
             data: user,
@@ -71,11 +72,11 @@ router.get('/:id', auth, async (req, res) => {
         if (!req.user.isAdmin) {
             return res.status(403).json({data: {}, message: `Unauthorized to access this route!!!`});
         }
-        const user = await User.findById(req.params.id);
+        const user = await User.findById(req.params.id).select('-password');
         if (!user) {
             return res.status(404).json({data: {}, message: `User with id ${req.params.id} does not exist`});
         }
-        res.status(200).json({data: user, message: `User with email ${req.user.email} successfully retrieved!!!`});
+        res.status(200).json({data: user, message: `User with email ${user.email} successfully retrieved!!!`});
     } catch (e) {
         res.status(500).json({message: e.message});
     }
@@ -92,7 +93,7 @@ router.delete('/:id', auth, async (req, res) => {
             return res.status(404).json({data: {}, message: `User with id ${req.params.id} does not exist`});
         }
         await user.remove();
-        res.status(200).json({data: user, message: `Account with email ${req.user.email} removed!!!`});
+        res.status(200).json({data: user, message: `Account with email ${user.email} removed!!!`});
     } catch (e) {
         res.status(500).json({message: e.message});
     }

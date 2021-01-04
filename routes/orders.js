@@ -62,8 +62,10 @@ router.get('/:id', auth, async (req, res, ) => {
 
 router.get('/', auth, async (req, res) => {
     try {
+        if(!req.user.isAdmin){
+            return res.status(401).json({data: {}, message: `Unauthorized to access this route!!!`});
+        }
         const orders = await Order.find({}).populate({path: 'user', select: 'name email'});
-
         res.status(200).json({data: orders, message: `${orders.length} Orders successfully retrieved`});
     } catch (e) {
         res.status(500).json({message: e.message});
@@ -85,27 +87,39 @@ router.put('/:id', auth, async (req, res) => {
         }
         for (const key of updates) {
             if (key === 'isPaid') {
-                order[key] = true;
-                order['paidAt'] = Date.now();
-                switch (order.paymentMethod) {
-                    case 'MOMO':
-                        break;
-                    case 'PAY_PAL':
-                        order.paymentResult = {
-                            id: req.body.id,
-                            status: req.body.status,
-                            update_time: req.body.update_time,
-                            email_address: req.body.email_address
-                        }
-                        break;
-                    case 'STRIPE':
-                        break;
-                    case 'CREDIT_CARD':
-                        break;
+                if(Boolean(req.body[key]) === false){
+                    order['isPaid'] = false;
+                    order['paidAt'] = undefined;
+                    order['isDelivered'] = false;
+                    order['deliveredAt'] = undefined;
+                }else {
+                    order['isPaid'] = true;
+                    order['paidAt'] = Date.now();
+                    switch (order.paymentMethod) {
+                        case 'MOMO':
+                            break;
+                        case 'PAY_PAL':
+                            order.paymentResult = {
+                                id: req.body.id,
+                                status: req.body.status,
+                                update_time: req.body.update_time,
+                                email_address: req.body.email_address
+                            }
+                            break;
+                        case 'STRIPE':
+                            break;
+                        case 'CREDIT_CARD':
+                            break;
+                    }
                 }
             } else if (key === 'isDelivered') {
-                order[key] = true;
-                order['deliveredAt'] = Date.now();
+                if(Boolean(req.body[key]) === false){
+                    order['isDelivered'] = false;
+                    order['deliveredAt'] = undefined;
+                }else {
+                    order['isDelivered'] = true;
+                    order['deliveredAt'] = Date.now();
+                }
             } else {
                 order[key] = req.body[key];
             }

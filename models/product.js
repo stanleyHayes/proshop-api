@@ -5,7 +5,7 @@ const Schema = mongoose.Schema
 const productSchema = new Schema({
     user: {
         type: Schema.Types.ObjectId,
-        required: false,
+        required: true,
         ref: "User"
     },
     name: {
@@ -20,12 +20,11 @@ const productSchema = new Schema({
     },
     image: {
         type: String,
-        required: false
+        required: true
     },
     brand: {
         type: String,
         trim: true,
-        lowercase: true,
         required: true,
     },
     description: {
