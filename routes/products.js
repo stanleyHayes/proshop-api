@@ -1,8 +1,11 @@
 import express from "express";
 import Product from "../models/product.js";
 import auth from "../middleware/auth.js";
+import reviewsRoute from "./reviews.js";
 
-const router = express.Router();
+const router = express.Router({mergeParams: true});
+
+router.use('/:productID/reviews', reviewsRoute);
 
 router.post('/', auth, async (req, res) => {
     try {
@@ -12,12 +15,6 @@ router.post('/', auth, async (req, res) => {
 
         await product
             .populate({
-                path: "reviews",
-                populate: {
-                    path: "user",
-                    select: 'name email _id'
-                }
-            }).populate({
                 path: "numReviews"
             }).execPopulate();
 
@@ -30,17 +27,29 @@ router.post('/', auth, async (req, res) => {
 
 router.get('/', async (req, res) => {
     try {
-        const products = await Product.find({})
+        const page = Number(req.query.page) || 1;
+        const limit = 8;
+        const skip = (page - 1) * limit;
+        const match = {};
+        const count = await Product.countDocuments(match);
+        if (req.query.keyword) {
+            match['name'] = {$regex: req.query.keyword, $options: 'i'}
+        }
+        const products = await Product.find(match).skip(skip).limit(limit)
             .populate({
-                path: "reviews",
-                populate: {
-                    path: "user",
-                    select: 'name email _id'
-                }
-            }).populate({
                 path: "numReviews"
             });
-        res.status(200).json({data: products, message: `${products.length} products retrieved`});
+        res.status(200).json({data: products, message: `${products.length} products retrieved`, page, count});
+    } catch (e) {
+        res.status(500).json({message: e.message});
+    }
+});
+
+
+router.get('/top', async (req, res) => {
+    try {
+        const topRatedProducts = await Product.find({}).sort({rating: -1}).limit(3);
+        res.status(200).json({data: topRatedProducts, message: `Top ${topRatedProducts.length} rated products retrieved`});
     } catch (e) {
         res.status(500).json({message: e.message});
     }
@@ -51,12 +60,6 @@ router.get('/:id', async (req, res) => {
     try {
         const product = await Product.findById(req.params.id)
             .populate({
-                path: "reviews",
-                populate: {
-                    path: "user",
-                    select: 'name email _id'
-                }
-            }).populate({
                 path: "numReviews"
             });
 
@@ -88,12 +91,6 @@ router.put('/:id', auth, async (req, res) => {
         await product.save();
         await product
             .populate({
-                path: "reviews",
-                populate: {
-                    path: "user",
-                    select: 'name email _id'
-                }
-            }).populate({
                 path: "numReviews"
             }).execPopulate();
         res.status(200).json({data: product, message: `${product.name} successfully updated!`});

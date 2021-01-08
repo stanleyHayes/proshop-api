@@ -3,7 +3,7 @@ import Review from "../models/review.js";
 import Product from "../models/product.js";
 import auth from "../middleware/auth.js";
 
-const router = express.Router();
+const router = express.Router({mergeParams: true});
 
 router.post('/', auth, async (req, res) => {
     try {
@@ -19,50 +19,53 @@ router.post('/', auth, async (req, res) => {
         const totalRating = productReviews.reduce((accumulator, review) => accumulator + review.rating, 0) + rating;
         productBeingReviewed.rating = totalRating / (productReviews.length + 1);
         productBeingReviewed.save();
-        await review.populate({path: 'product', select: 'name'}).populate({
+        await review.populate({
             path: 'user',
             select: 'name email _id'
         }).execPopulate();
-        res.status(201).json({data: review, message: `Review created on product ${review.product.name}`})
+        res.status(201).json({data: review, message: `Review created on product ${productBeingReviewed.name}`})
     } catch (e) {
-        res.status(500).json({error: e.message});
+        res.status(500).json({message: e.message});
     }
 });
 
 
-router.get('/', auth, async (req, res) => {
+router.get('/', async (req, res) => {
     try {
-        if (!req.user.isAdmin) {
+        let reviews;
+        if (req.params.productID) {
+            reviews = await Review.find({product: req.params.productID})
+                .populate({
+                    path: 'user',
+                    select: 'name email _id'
+                });
+        } else {
             return res.status(401).json({data: [], message: `Unauthorized to access this route`});
         }
-        const reviews = Review.find({});
         res.status(200).json({data: reviews, message: `${reviews.length} reviews retrieved!!!`});
     } catch (e) {
-        res.status(500).json({error: e.message});
+        res.status(500).json({message: e.message});
     }
 });
 
-router.get('/:id', auth, async (req, res) =>{
+router.get('/:id', async (req, res) => {
     try {
         const review = await Review.findById(req.params.id)
             .populate({
-                path: "product",
-                select: 'name price description category brand'
-            }).populate({
                 path: "user",
-                select: 'name email'
+                select: 'name email _id'
             });
 
         if (!review) {
             return res.status(404).json({message: "Review not found", data: {}});
         }
         res.status(200).json({data: review, message: `Review with user ${review.user.name} retrieved successfully`});
-    }catch (e) {
-        res.status(500).json({error: e.message});
+    } catch (e) {
+        res.status(500).json({message: e.message});
     }
 });
 
-router.put('/:id', auth, async (req, res) =>{
+router.put('/:id', auth, async (req, res) => {
     try {
         let review = await Review.findById(req.params.id)
         if (!review) {
@@ -86,13 +89,13 @@ router.put('/:id', auth, async (req, res) =>{
                 path: "user",
                 select: 'name email'
             }).execPopulate();
-    }catch (e) {
-        res.status(500).json({error: e.message});
+    } catch (e) {
+        res.status(500).json({message: e.message});
     }
 });
 
 
-router.delete('/:id', auth, async (req, res) =>{
+router.delete('/:id', auth, async (req, res) => {
     try {
         let review = await Review.findById(req.params.id);
         if (!review) {
@@ -100,8 +103,8 @@ router.delete('/:id', auth, async (req, res) =>{
         }
         await review.remove();
         res.status(200).json({data: review, message: `${review._id} removed!`});
-    }catch (e) {
-        res.status(500).json({error: e.message});
+    } catch (e) {
+        res.status(500).json({message: e.message});
     }
 });
 
